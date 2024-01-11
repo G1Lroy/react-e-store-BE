@@ -9,15 +9,16 @@ import {
 } from '@nestjs/common';
 import { ProductListService } from './products.service';
 import { SingleProduct } from 'src/entities/products/singleProduct';
+import { singleProductMock } from 'src/mock-data/singleProduct';
 
 export interface ProductQueryParams {
   // desc - по убыванию
   //  asc - по возрастанию
-  _sortBy?: 'desc' | 'asc';
-  _field?: 'price' | 'id' | 'collectionDate';
-  _minPrice?: number;
-  _maxPrice?: number;
-  _sizes?: string[];
+  _order: 'desc' | 'asc';
+  _field: 'price' | 'id' | 'collectionDate';
+  _minPrice: number;
+  _maxPrice: number;
+  _sizes: string;
 }
 
 @Controller('productList')
@@ -25,7 +26,7 @@ export class ProductListController {
   constructor(private readonly productService: ProductListService) {}
 
   @Get()
-  async getProductList(@Query() queryParams: ProductQueryParams) {
+  async getProductList(@Query() queryParams: Partial<ProductQueryParams>) {
     const productList = await this.productService.getProductList(queryParams);
     return productList;
   }
@@ -33,10 +34,10 @@ export class ProductListController {
   createProductList() {
     // need once
     return;
-    return this.productService.createProductList();
+    // return this.productService.createProductList();
   }
 
-  @Post()
+  @Post('add-new')
   addProduct(@Body() newProduct: SingleProduct) {
     return this.productService.addProduct(newProduct);
   }

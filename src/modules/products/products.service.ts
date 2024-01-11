@@ -5,6 +5,8 @@ import { ProductList } from 'src/entities/products/productList';
 import { SingleProduct } from 'src/entities/products/singleProduct';
 import { productListMock } from 'src/mock-data/productList';
 import { ProductFilterService } from '../filters/filters.service';
+import { singleProductMock } from 'src/mock-data/singleProduct';
+import { ProductQueryParams } from './products.controller';
 
 @Injectable()
 export class ProductListService {
@@ -18,14 +20,13 @@ export class ProductListService {
     return 'Success!';
   }
 
-  async getProductList(queryParams) {
+  async getProductList(queryParams: Partial<ProductQueryParams>) {
     const aggregationPipeline =
       this.productFilterService.getSortOptions(queryParams);
 
     const productList = await this.productListModel
       .aggregate(aggregationPipeline)
       .exec();
-
     return productList;
   }
 
@@ -33,7 +34,8 @@ export class ProductListService {
     const productList = await this.productListModel
       .findOneAndUpdate(
         {},
-        { $push: { products: newProduct } },
+        // add MOCK OBJ
+        { $push: { products: singleProductMock } },
         { new: true, upsert: true },
       )
       .exec();
@@ -42,23 +44,16 @@ export class ProductListService {
       throw new NotFoundException('Product list not found');
     }
 
-    return productList;
+    return 'Product added!';
   }
 
   async removeProduct(productId: string) {
-    const productList = await this.productListModel
-      .findOneAndUpdate(
-        {},
-        { $pull: { products: { id: productId } } },
-        { new: true },
-      )
-      .exec();
+    await this.productListModel.updateOne(
+      {},
+      { $pull: { products: { id: productId } } },
+    );
 
-    if (!productList) {
-      throw new NotFoundException('Product list not found');
-    }
-
-    return productList;
+    return productId + ' ' + 'Id remove';
   }
 }
 

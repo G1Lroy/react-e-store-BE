@@ -1,3 +1,7 @@
+import { ProductList } from 'src/entities/products/productList';
+import { singleProductMock } from './singleProduct';
+import { SingleProduct } from 'src/entities/products/singleProduct';
+
 export const productListMock = [
   {
     id: 'p1',
@@ -45,4 +49,5 @@ export const productListMock = [
       { size: '43', id: 8 },
     ],
   },
+  singleProductMock,
 ];

@@ -5,6 +5,7 @@ import { ProductQueryParams } from '../products/products.controller';
 @Injectable()
 export class ProductFilterService {
   getSortOptions(queryParams: Partial<ProductQueryParams>) {
+    
     const { _field, _maxPrice, _minPrice, _sizes, _order } = queryParams;
 
     // take products[] for actions
@@ -33,13 +34,13 @@ export class ProductFilterService {
     }
 
     // filter by chosen sizes
-    if (_sizes.length) {
+    if (_sizes) {
       // ...productList?_sizes=41,12,55
       
       const sizesArr = _sizes.split(',');
       options.push({
         $match: {
-          'products.shoesSize.size': { $in: [...sizesArr] },
+          'products.shoesSize.size': { $in: sizesArr },
         },
       });
     }

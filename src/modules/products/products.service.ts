@@ -56,15 +56,3 @@ export class ProductListService {
     return productId + ' ' + 'Id remove';
   }
 }
-
-// потратил 4+ часа  не работает через sort()
-// ебал рот
-// const productList = await this.productListModel
-//   .findOne({})
-//   .sort({ 'products.price': -1 })
-//   .exec();
-
-// const sortOptions = this.productFilterService.getSortOptions(
-//   sortType,
-//   field,
-// );

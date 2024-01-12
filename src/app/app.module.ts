@@ -4,7 +4,8 @@ import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserModule } from 'src/modules/user/user.module';
 import { ProductListModule } from 'src/modules/products/products.module';
-import { ProductFilterModule } from 'src/modules/filters/filters.module';
+import { CartModule } from 'src/modules/cart/cart.module';
+import { CartService } from 'src/modules/cart/cart.service';
 
 require('dotenv').config();
 
@@ -15,7 +16,7 @@ require('dotenv').config();
     ),
     UserModule,
     ProductListModule,
-    
+    CartModule,
   ],
   controllers: [AppController],
   providers: [AppService],

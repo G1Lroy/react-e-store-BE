@@ -5,7 +5,6 @@ import { ProductQueryParams } from '../products/products.controller';
 @Injectable()
 export class ProductFilterService {
   getSortOptions(queryParams: Partial<ProductQueryParams>) {
-    
     const { _field, _maxPrice, _minPrice, _sizes, _order } = queryParams;
 
     // take products[] for actions
@@ -36,7 +35,7 @@ export class ProductFilterService {
     // filter by chosen sizes
     if (_sizes) {
       // ...productList?_sizes=41,12,55
-      
+
       const sizesArr = _sizes.split(',');
       options.push({
         $match: {

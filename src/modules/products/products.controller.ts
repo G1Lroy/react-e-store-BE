@@ -9,7 +9,6 @@ import {
 } from '@nestjs/common';
 import { ProductListService } from './products.service';
 import { SingleProduct } from 'src/entities/products/singleProduct';
-import { singleProductMock } from 'src/mock-data/singleProduct';
 
 export interface ProductQueryParams {
   // desc - по убыванию

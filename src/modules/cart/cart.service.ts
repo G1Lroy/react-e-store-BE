@@ -1,120 +1,130 @@
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Cart, CartItem } from 'src/entities/cart/cart';
+import { Cart } from 'src/entities/cart/cart';
+import { CartItem } from 'src/entities/cart/cartItem';
 
-// interface CartArgs {
-//   cartId: string;
-//   itemId: string;
-// }
+export interface CartResponseMessage {
+  message: string;
+  status: HttpStatus;
+}
 
 @Injectable()
 export class CartService {
-  constructor(@InjectModel(Cart.name) private cartModel: Model<Cart>) {}
-
-  async getCart(cartId: string): Promise<Cart> {
-    return this.cartModel.findById(cartId).exec();
-  }
+  constructor(
+    @InjectModel(Cart.name) private CartModel: Model<Cart>,
+    @InjectModel(CartItem.name) private CartItemModel: Model<CartItem>,
+  ) {}
 
   async createCart(): Promise<string> {
-    const cart = new this.cartModel({
+    const cart = await new this.CartModel({
       products: [],
       payment: { total: 0 },
-    });
-    await cart.save();
+    }).save();
     return cart._id;
   }
 
-  async updateTotalPayment(cartId: string): Promise<void> {
-    await this.cartModel.findOneAndUpdate(
-      { _id: cartId },
-      [
-        {
-          $set: {
-            'payment.total': {
-              $reduce: {
-                input: '$products',
-                initialValue: 0,
-                in: {
-                  $add: [
-                    '$$value',
-                    { $multiply: ['$$this.price', '$$this.quantity'] },
-                  ],
-                },
-              },
-            },
-          },
-        },
-      ],
-      { new: true },
-    );
+  async calculateTotalPayment(cart: Cart): Promise<number> {
+    const cartItems = await this.CartItemModel.find({
+      _id: { $in: cart.products },
+    });
+    if (!cartItems.length) return 0;
+    return cartItems.reduce((total, cartItem) => total + cartItem.price, 0);
   }
 
-  async checkCartAndGetItem(
-    cartId: string,
+  async checkItemInUserCart(
     itemId: string,
-  ): Promise<CartItem | null> {
-    // Check cart id
-    if (!Types.ObjectId.isValid(cartId)) {
-      throw new BadRequestException(
-        'Corrupted cart ID, id must containe 24 hex symbols [65a134e61208ce9a33186657]',
-      );
-    }
-
-    const existingCart = await this.cartModel.findById(cartId);
-    if (!existingCart) {
-      throw new BadRequestException('Cant find cart with id_' + cartId);
-    }
-
-    const existingItem = await this.cartModel.findOne(
-      { _id: cartId, 'products.id': itemId },
+    cartId: string,
+  ): Promise<string | null> {
+    const existingItem = await this.CartModel.findOne(
+      {
+        _id: cartId,
+        products: itemId,
+      },
       { 'products.$': 1 },
     );
+
+    return existingItem ? existingItem.products[0] : null;
+  }
+
+  async getCart(cartId: string): Promise<Cart> {
+    this.validate_Id(cartId);
+
+    const cart = await this.CartModel.findById(cartId).exec();
+    if (!cart) {
+      throw new BadRequestException('Cant find cart');
+    }
+    return cart;
+  }
+
+  validate_Id(cartId: string): void {
+    if (!Types.ObjectId.isValid(cartId))
+      throw new BadRequestException('Corrupted ID');
+  }
+
+  async addItemToCart(
+    cartId: string,
+    cartItem: CartItem,
+  ): Promise<CartResponseMessage> {
+    const itemId = cartItem._id;
+    this.validate_Id(itemId);
+    const cart = await this.getCart(cartId);
+    // check user cart
+    const existingInUserCart = await this.checkItemInUserCart(itemId, cartId);
+    if (existingInUserCart) {
+      throw new BadRequestException('Item already in cart');
+    }
+    // check cart items collecton
+    const existingInCollection = await this.CartItemModel.findOne({
+      _id: itemId,
+    });
+    if (!existingInCollection) {
+      await this.CartItemModel.create(cartItem);
+    }
+    // update user cart
+    cart.products.push(existingInCollection._id);
+    cart.payment.total = await this.calculateTotalPayment(cart);
+
+    // save updated cart
+    try {
+      await cart.save();
+      return {
+        message: 'Item added to cart',
+        status: HttpStatus.CREATED,
+      };
+    } catch (error) {
+      if (error.message) {
+        throw new BadRequestException(error.message);
+      }
+    }
+  }
+
+  async removeItemFromCart(
+    cartId: string,
+    cartItemId: string,
+  ): Promise<CartResponseMessage> {
+    const cart = await this.getCart(cartId);
+    this.validate_Id(cartItemId);
+    const existingItem = await this.checkItemInUserCart(cartItemId, cartId);
+
     if (!existingItem) {
-      throw new BadRequestException('Cant find cart item with id_' + itemId);
+      throw new BadRequestException('Item not found in cart');
     }
+    // update user cart
+    cart.products = cart.products.filter((p) => p.toString() !== cartItemId);
+    cart.payment.total = await this.calculateTotalPayment(cart);
 
-    // return cart item
-    return existingItem.products[0];
-  }
-
-  async addItemToCart(cartId: string, cartItem: CartItem): Promise<{}> {
-    const { id } = cartItem;
-    const existingItem = await this.checkCartAndGetItem(cartId, id);
-
-    if (existingItem) {
-      throw new BadRequestException(`Item already in cart. ID: ${id}`);
+    // save user cart
+    try {
+      await cart.save();
+      return {
+        message: 'Cart updated, item deleted',
+        status: HttpStatus.CREATED,
+      };
+    } catch (error) {
+      if (error.message) {
+        throw new BadRequestException(error.message);
+      }
     }
-
-    const cart = await this.cartModel.findByIdAndUpdate(
-      cartId,
-      { $addToSet: { products: cartItem } },
-      { new: true },
-    );
-    await this.updateTotalPayment(cartId);
-
-    return {
-      message: 'Item add to cart',
-      status: HttpStatus.CREATED,
-      obj: cart.products,
-      total: cart.payment.total,
-    };
-  }
-
-  async removeItemFromCart(cartId: string, cartItemId: string): Promise<{}> {
-    const cartItem = await this.checkCartAndGetItem(cartId, cartItemId);
-
-    const updateCart = await this.cartModel.findByIdAndUpdate(
-      cartId,
-      { $pull: { products: { id: cartItem.id } } },
-      { new: true },
-    );
-    await this.updateTotalPayment(cartId);
-    return {
-      message: 'Cart Update, item deleted',
-      status: HttpStatus.CREATED,
-      prodocts: updateCart.products,
-      total: updateCart.payment.total,
-    };
   }
 }

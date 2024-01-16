@@ -9,6 +9,7 @@ export class ProductFilterService {
 
     // take products[] for actions
     const options: PipelineStage[] = [{ $unwind: '$products' }];
+    
 
     // sort by field and order
     if (_order || _field) {
@@ -49,6 +50,7 @@ export class ProductFilterService {
       options.push({ $sort: { 'products.price': -1 } });
     }
 
+    
     // push filtered\sorted products[] to productList
     options.push({ $group: { _id: '$_id', products: { $push: '$products' } } });
 

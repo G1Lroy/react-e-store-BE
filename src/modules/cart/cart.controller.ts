@@ -1,6 +1,14 @@
-import { Controller, Post, Param, Body, Delete, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Param,
+  Body,
+  Delete,
+  Get,
+  ValidationPipe,
+} from '@nestjs/common';
 import { CartService } from './cart.service';
-import { CartItem } from 'src/entities/cart/cart';
+import { CartItem } from 'src/entities/cart/cartItem';
 
 @Controller('cart')
 export class CartController {
@@ -11,7 +19,7 @@ export class CartController {
     return this.cartService.getCart(cartId);
   }
 
-  @Post(':cartId/add-item')
+  @Post(':cartId')
   async addItemToCart(
     @Param('cartId') cartId: string,
     @Body() cartItem: CartItem,
@@ -19,11 +27,11 @@ export class CartController {
     return this.cartService.addItemToCart(cartId, cartItem);
   }
 
-  @Delete(':cartId/:cartItemId')
+  @Delete(':cartId')
   async removeItemFromCart(
     @Param('cartId') cartId: string,
-    @Param('cartItemId') cartItemId: string,
+    @Body() cartItemId: { _id: string },
   ) {
-    return this.cartService.removeItemFromCart(cartId, cartItemId);
+    return this.cartService.removeItemFromCart(cartId, cartItemId._id);
   }
 }

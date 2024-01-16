@@ -3,11 +3,14 @@ import { Document } from 'mongoose';
 
 @Schema()
 export class CartItem extends Document {
+  // @Prop({ required: true })
+  // id: string;
+
   @Prop({ required: true })
   title: string;
 
   @Prop({ required: true })
-  productImage: string;
+  productImage: string[];
 
   @Prop({ required: true, type: Number })
   price: number;

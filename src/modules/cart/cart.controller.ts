@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Post,
-  Param,
-  Body,
-  Delete,
-  Get,
-  ValidationPipe,
-} from '@nestjs/common';
+import { Controller, Post, Param, Body, Delete, Get } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { CartItem } from 'src/entities/cart/cartItem';
 
@@ -17,6 +9,10 @@ export class CartController {
   @Get(':cartId')
   async getCart(@Param('cartId') cartId: string) {
     return this.cartService.getCart(cartId);
+  }
+  @Get(':cartId/products')
+  async getCartProducts(@Param('cartId') cartId: string) {
+    return this.cartService.getCartProducts(cartId);
   }
 
   @Post(':cartId')

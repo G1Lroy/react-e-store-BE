@@ -9,6 +9,8 @@ export interface CartResponseMessage {
   status: HttpStatus;
 }
 
+type FieldsType = 'cart item' | 'cart';
+
 @Injectable()
 export class CartService {
   constructor(
@@ -48,7 +50,7 @@ export class CartService {
   }
 
   async getCart(cartId: string): Promise<Cart> {
-    this.validate_Id(cartId);
+    this.validate_Id(cartId, 'cart');
 
     const cart = await this.CartModel.findById(cartId).exec();
     if (!cart) {
@@ -57,9 +59,18 @@ export class CartService {
     return cart;
   }
 
-  validate_Id(cartId: string): void {
-    if (!Types.ObjectId.isValid(cartId))
-      throw new BadRequestException('Corrupted ID');
+  async getCartProducts(cartId: string): Promise<CartItem[]> {
+    const cart = await this.getCart(cartId);
+    const productIds = cart.products.map((productId) => productId.toString());
+    const products = await this.CartItemModel.find({
+      _id: { $in: productIds },
+    });
+    return products;
+  }
+
+  validate_Id(id: string, field: FieldsType): void {
+    if (!Types.ObjectId.isValid(id))
+      throw new BadRequestException(`Corrupted ${field} ID, please check it`);
   }
 
   async addItemToCart(
@@ -67,7 +78,7 @@ export class CartService {
     cartItem: CartItem,
   ): Promise<CartResponseMessage> {
     const itemId = cartItem._id;
-    this.validate_Id(itemId);
+    this.validate_Id(itemId, 'cart item');
     const cart = await this.getCart(cartId);
     // check user cart
     const existingInUserCart = await this.checkItemInUserCart(itemId, cartId);
@@ -79,10 +90,15 @@ export class CartService {
       _id: itemId,
     });
     if (!existingInCollection) {
-      await this.CartItemModel.create(cartItem);
+      // validate by Schema on creation
+      try {
+        await this.CartItemModel.create(new this.CartItemModel(cartItem));
+      } catch (error) {
+        if (error.message) throw new BadRequestException(error.message);
+      }
     }
     // update user cart
-    cart.products.push(existingInCollection._id);
+    cart.products.push(itemId);
     cart.payment.total = await this.calculateTotalPayment(cart);
 
     // save updated cart
@@ -104,7 +120,7 @@ export class CartService {
     cartItemId: string,
   ): Promise<CartResponseMessage> {
     const cart = await this.getCart(cartId);
-    this.validate_Id(cartItemId);
+    this.validate_Id(cartItemId, 'cart item');
     const existingItem = await this.checkItemInUserCart(cartItemId, cartId);
 
     if (!existingItem) {

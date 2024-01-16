@@ -9,8 +9,6 @@ interface ISize {
 
 @Schema()
 export class SingleProduct extends Document {
-  @Prop()
-  _id: string;
 
   @Prop()
   title: string;

@@ -5,11 +5,11 @@ import { ProductQueryParams } from '../products/products.controller';
 @Injectable()
 export class ProductFilterService {
   getSortOptions(queryParams: Partial<ProductQueryParams>) {
-    
     const { _field, _maxPrice, _minPrice, _sizes, _order } = queryParams;
 
     // take products[] for actions
     const options: PipelineStage[] = [{ $unwind: '$products' }];
+    
 
     // sort by field and order
     if (_order || _field) {
@@ -36,7 +36,7 @@ export class ProductFilterService {
     // filter by chosen sizes
     if (_sizes) {
       // ...productList?_sizes=41,12,55
-      
+
       const sizesArr = _sizes.split(',');
       options.push({
         $match: {
@@ -50,6 +50,7 @@ export class ProductFilterService {
       options.push({ $sort: { 'products.price': -1 } });
     }
 
+    
     // push filtered\sorted products[] to productList
     options.push({ $group: { _id: '$_id', products: { $push: '$products' } } });
 

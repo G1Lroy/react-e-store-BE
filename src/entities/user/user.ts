@@ -1,17 +1,21 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
-import { Cart } from '../cart/cart';
+import { Document, Schema as MongooseSchema } from 'mongoose';
 
 @Schema()
 export class User extends Document {
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true, unique: true, })
   email: string;
 
   @Prop({ required: true, minlength: 3 })
   password: string;
 
-  @Prop({ type: { type: 'ObjectId', ref: 'Cart' } })
-  cart: Cart;
+  @Prop({
+    required: true,
+    unique: true,
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'Cart',
+  })
+  cart_ID: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

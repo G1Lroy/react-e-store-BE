@@ -6,7 +6,7 @@ interface CreateUserDto {
   password: string;
 }
 
-@Controller('users')
+@Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -19,10 +19,5 @@ export class UserController {
   @Get(':id')
   async getUserById(@Param('id') userId: string) {
     return this.userService.getUserById(userId);
-  }
-  @Get()
-  async getUser() {
-    // check
-    return 'users';
   }
 }

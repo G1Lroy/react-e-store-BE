@@ -1,8 +1,8 @@
-// user.service.ts
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './../../entities/user/user';
+import { CartService } from '../cart/cart.service';
 
 export interface CreateUserMessage {
   status: number;
@@ -13,6 +13,7 @@ export interface CreateUserMessage {
 export class UserService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<User>,
+    private readonly cartService: CartService,
   ) {}
 
   async createUser(
@@ -20,14 +21,21 @@ export class UserService {
     password: string,
   ): Promise<CreateUserMessage | unknown> {
     try {
-        //   TODO hash pass
-      const newUser = new this.userModel({ email, password });
+      
+      //   TODO hash pass
+      const newUser = new this.userModel({
+        email,
+        password,
+        //  create empty cart for each user
+        cart_ID: await this.cartService.createCart(),
+      });
+
       await newUser.save();
+
       return { message: 'User created', status: HttpStatus.CREATED };
+
     } catch (error: any) {
-      if (error.message) {
-        throw new BadRequestException(error.message);
-      }
+      if (error.message) throw new BadRequestException(error.message);
     }
   }
 

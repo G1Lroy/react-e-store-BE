@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { AggregateOptions, Model, PipelineStage } from 'mongoose';
+import { Model } from 'mongoose';
 import { ProductList } from 'src/entities/products/productList';
 import { SingleProduct } from 'src/entities/products/singleProduct';
 import { productListMock } from 'src/mock-data/productList';
@@ -9,9 +9,12 @@ import { singleProductMock } from 'src/mock-data/singleProduct';
 import { ProductQueryParams } from './products.controller';
 
 @Injectable()
+
 export class ProductListService {
   constructor(
     @InjectModel(ProductList.name) private productListModel: Model<ProductList>,
+    // @InjectModel(SingleProduct.name)
+    // private singleProduct: Model<SingleProduct>,
     private readonly productFilterService: ProductFilterService,
   ) {}
   async createProductList() {
@@ -31,6 +34,9 @@ export class ProductListService {
   }
 
   async addProduct(newProduct: SingleProduct) {
+    
+    // new this.singleProduct({})
+
     const productList = await this.productListModel
       .findOneAndUpdate(
         {},
@@ -56,15 +62,3 @@ export class ProductListService {
     return productId + ' ' + 'Id remove';
   }
 }
-
-// потратил 4+ часа  не работает через sort()
-// ебал рот
-// const productList = await this.productListModel
-//   .findOne({})
-//   .sort({ 'products.price': -1 })
-//   .exec();
-
-// const sortOptions = this.productFilterService.getSortOptions(
-//   sortType,
-//   field,
-// );

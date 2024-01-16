@@ -1,11 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
-import { CartItem } from './cartItem';
+import { Document, Schema as MongooseSchema } from 'mongoose';
 
 @Schema()
 export class Cart extends Document {
-  @Prop({ type: [{ type: 'ObjectId', ref: 'SingleProduct' }] })
-  products: CartItem[];
+  @Prop({ type: [MongooseSchema.Types.ObjectId], ref: 'CartItem' })
+  products: string[];
 
   @Prop({ type: { total: Number } })
   payment: { total: number };

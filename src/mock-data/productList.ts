@@ -1,6 +1,4 @@
-import { ProductList } from 'src/entities/products/productList';
 import { singleProductMock } from './singleProduct';
-import { SingleProduct } from 'src/entities/products/singleProduct';
 
 export const productListMock = [
   {
